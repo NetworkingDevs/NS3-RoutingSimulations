@@ -1,3 +1,16 @@
+/**
+ * Learn to simulate static routing more better,
+ * In this example, we're using Two LAN's to
+ * Simulate the static rouitng. The main thing
+ * which is need to take care here is, the 
+ * last parameter of the function to Add Network
+ * Route. The last parameter is interface identifier.
+ * 
+ * The interface identifier depeneds on the order
+ * of nodes in the devices (NetDeviceContainer) and
+ * that too depends on the order of nodes in 
+ * NodeContainer.
+ */
 // For General Imports
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -50,7 +63,7 @@ int main() {
     NetDeviceContainer devicesGrpA,devicesGrpB,devicesGrpAB;
     devicesGrpA = csma.Install(nodesGrpA);
     devicesGrpB = csma.Install(nodesGrpB);
-    devicesGrpAB = csma.Install(nodesGrpAB);
+    devicesGrpAB = p2p.Install(nodesGrpAB);
     
     // Install Internet stack
     InternetStackHelper internet;
@@ -59,13 +72,14 @@ int main() {
     // Assign IP addresses
     Ipv4AddressHelper address;
     address.SetBase("192.168.1.0", "255.255.255.0");
-    Ipv4InterfaceContainer interfacesA = address.Assign(devicesGrpA);
+    Ipv4InterfaceContainer interfacesA = address.Assign(devicesGrpA); // The interface identifier = 1 for all nodes used in "devicesGrpA"
     
     address.SetBase("192.168.2.0", "255.255.255.0");
-    Ipv4InterfaceContainer interfacesB = address.Assign(devicesGrpB);
+    Ipv4InterfaceContainer interfacesB = address.Assign(devicesGrpB); // The interface identifier = 1 
     
+    // Since, the node used in "devicesGrpAB" already have interface identifier = 1
     address.SetBase("10.10.10.0", "255.255.255.252");
-    Ipv4InterfaceContainer interfacesAB = address.Assign(devicesGrpAB);
+    Ipv4InterfaceContainer interfacesAB = address.Assign(devicesGrpAB); // The interface identifier = 2
     
     // Get the Ipv4StaticRouting instance for each node
     Ipv4StaticRoutingHelper staticRoutingHelper;
@@ -75,7 +89,9 @@ int main() {
     Ptr<Ipv4StaticRouting> staticRoutingGrpBNode1 = staticRoutingHelper.GetStaticRouting(nodesGrpB.Get(1)->GetObject<Ipv4>());
     
     // Configure static routes
+    // See the last parameter, which is Interface idetifier
     staticRoutingGrpANode0->AddNetworkRouteTo(Ipv4Address("192.168.2.0"), Ipv4Mask("255.255.255.0"), interfacesAB.GetAddress(1), 2);
+    // See the last parameter, which is Interface identifier
     staticRoutingGrpBNode0->AddNetworkRouteTo(Ipv4Address("192.168.1.0"), Ipv4Mask("255.255.255.0"), interfacesAB.GetAddress(0), 2);
     staticRoutingGrpANode1->AddNetworkRouteTo(Ipv4Address("192.168.2.0"), Ipv4Mask("255.255.255.0"), interfacesA.GetAddress(0), 1);
     staticRoutingGrpANode1->AddNetworkRouteTo(Ipv4Address("10.10.10.0"), Ipv4Mask("255.255.255.252"), interfacesA.GetAddress(0), 1);
@@ -83,7 +99,8 @@ int main() {
     staticRoutingGrpBNode1->AddNetworkRouteTo(Ipv4Address("10.10.10.0"), Ipv4Mask("255.255.255.252"), interfacesB.GetAddress(0), 1);
     
     // Enable packet capture
-    csma.EnablePcapAll("static-routing");
+    csma.EnablePcapAll("extendedStaticRouting-CSMA");
+    p2p.EnablePcapAll("extendedStaticRouting-P2P");
     
     Ptr<OutputStreamWrapper> routingTblPrintStream = Create<OutputStreamWrapper> (&std::cout);
     Simulator::Schedule (Seconds(1.0), &printRoutingTable, nodes.Get(0), routingTblPrintStream);
@@ -127,7 +144,7 @@ int main() {
     clientApps.Start(Seconds(2.0));
     clientApps.Stop(Seconds(10.0));
 
-    AnimationInterface anim("testStatic.xml");
+    AnimationInterface anim("extendedStaticRouting.xml");
     anim.SetConstantPosition(nodesGrpA.Get(0), 10, 10);
     anim.SetConstantPosition(nodesGrpA.Get(1), 0, 20);
     anim.SetConstantPosition(nodesGrpA.Get(2), 20, 20);
