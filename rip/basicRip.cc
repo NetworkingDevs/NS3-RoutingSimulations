@@ -51,7 +51,7 @@ int main() {
     ipv4.Assign(devices01);
 
     ipv4.SetBase("20.0.0.0", Ipv4Mask("/8"));
-    ipv4.Assign(devices01);
+    ipv4.Assign(devices12);
 
     // Pinging from n0(10.0.0.1) to n2(20.0.0.2)...
     uint32_t packetSize = 1024;
